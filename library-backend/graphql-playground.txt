@@ -5,7 +5,6 @@ query counts {
   bookCount
   authorCount
 }
-
 query allBooks {
   allBooks {
     title
@@ -38,7 +37,6 @@ query allAuthors {
     bookCount
   }
 }
-
 mutation addBookNoSQL {
   addBook(
     title: "NoSQL Distilled"
@@ -50,7 +48,6 @@ mutation addBookNoSQL {
     author
   }
 }
-
 mutation addBookNewAuthorReijo {
   addBook(
     title: "Pimeyden tango"
@@ -62,10 +59,27 @@ mutation addBookNewAuthorReijo {
     author
   }
 }
-
 mutation editAuthorReijoBorn {
   editAuthor(name: "Reijo Mäki", setBornTo: 1958) {
     name
     born
   }
+}
+mutation createBook($title: String!, $author: String!, $published: Int!, $genres: [String!]!) {
+  addBook(
+    title: $title,
+    author: $author,
+    published: $published,
+    genres: $genres
+  ) {
+    title
+    author
+  }
+}
+QUERY VARIABLES
+{
+  "title": "test",
+  "author": "test",
+  "published": "1989",
+  "genres": ["test"]  
 }
