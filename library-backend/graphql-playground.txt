@@ -94,7 +94,21 @@ mutation createBook($title: String!, $author: String!, $published: Int!, $genres
     author {name, born}
   }
 }
-
+mutation createUser {
+  createUser(username: "Josh") {
+    username
+  }
+}
+mutation login {
+    login(username: "Josh", password: "secret")  {
+      value
+    }
+}
+query me {
+  me {
+    username
+  }
+}
 
 QUERY VARIABLES
 {
@@ -102,4 +116,9 @@ QUERY VARIABLES
   "author": "test",
   "published": "1989",
   "genres": ["test"]  
+}
+
+HTTP Headers
+{
+  "Authorization": "bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ikpvc2giLCJpZCI6IjYwODA3NTc0MWI5N2ZhMzM4M2ZhMmY5MSIsImlhdCI6MTYxOTAzMTQ2M30.lSpmFLhDkGEZxtcPxdP4DsdaeA7TJ_YzjL5ProFJQiw"
 }
