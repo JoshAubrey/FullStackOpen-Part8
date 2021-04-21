@@ -8,7 +8,7 @@ query counts {
 query allBooks {
   allBooks {
     title
-    author
+    author {name}
     published
     genres
   }
@@ -18,16 +18,34 @@ query allBooksAuthorRobert {
     title
   }
 }
+query allBooksAuthorTest {
+  allBooks(author: "test") {
+    title
+    author {name}
+  }
+}
 query allBooksGenreRefactoring {
   allBooks(genre: "refactoring") {
     title
-    author
+    author {name}
+  }
+}
+query allBooksGenreTest {
+  allBooks(genre: "test") {
+    title
+    author {name}
   }
 }
 query allBooksAuthorRobertGenreRefactoring {
   allBooks(author: "Robert Martin", genre: "refactoring") {
     title
-    author
+    author {name}
+  }
+}
+query allBooksAuthorTestGenreTest {
+  allBooks(author: "test", genre: "test") {
+    title
+    author {name}
   }
 }
 query allAuthors {
@@ -45,7 +63,7 @@ mutation addBookNoSQL {
     genres: ["database", "nosql"]
   ) {
     title
-    author
+    author {name}
   }
 }
 mutation addBookNewAuthorReijo {
@@ -56,7 +74,7 @@ mutation addBookNewAuthorReijo {
     genres: ["crime"]
   ) {
     title
-    author
+    author {name}
   }
 }
 mutation editAuthorReijoBorn {
@@ -73,9 +91,11 @@ mutation createBook($title: String!, $author: String!, $published: Int!, $genres
     genres: $genres
   ) {
     title
-    author
+    author {name, born}
   }
 }
+
+
 QUERY VARIABLES
 {
   "title": "test",
