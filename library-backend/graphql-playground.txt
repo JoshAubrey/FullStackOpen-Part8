@@ -95,7 +95,7 @@ mutation createBook($title: String!, $author: String!, $published: Int!, $genres
   }
 }
 mutation createUser {
-  createUser(username: "Josh") {
+  createUser(username: "Josh", favoriteGenre:"test") {
     username
   }
 }
