@@ -2,6 +2,9 @@ const { ApolloServer, UserInputError, AuthenticationError, gql } = require('apol
 const { v1: uuid } = require('uuid')
 const jwt = require('jsonwebtoken')
 
+const { PubSub } = require('apollo-server')
+const pubsub = new PubSub()
+
 const mongoose = require('mongoose')
 const Author = require('./models/author')
 const Book = require('./models/book')
@@ -18,6 +21,8 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true,
   .catch((error) => {
     console.log('error connection to MongoDB:', error.message)
   })
+
+//mongoose.set('debug', true);
 
 // let authors = [
 //   {
@@ -108,6 +113,7 @@ const typeDefs = gql`
     id: ID!
     born: Int
     bookCount: Int
+    books: [Book!]
   }
 
   type Book {
@@ -159,6 +165,10 @@ const typeDefs = gql`
       password: String!
     ): Token
   }
+
+  type Subscription {
+    bookAdded: Book!
+  }  
 `
 
 const resolvers = {
@@ -176,12 +186,13 @@ const resolvers = {
       : await Book.find({}).populate('author')
     ),
     //allAuthors: () => authors
-    allAuthors: () => Author.find({}),
+    allAuthors: () => Author.find({}).populate('books'),
     me: (root, args, context) => context.currentUser
   },
   Author: {
     //bookCount: (root) => books.filter(b => b.author === root.name).length
-    bookCount: (root) => Book.find({ author: root }).countDocuments()
+    //bookCount: (root) => Book.find({ author: root }).countDocuments() //n+1 problem
+    bookCount: (root) => root.books.length
   },
   Mutation: {
     addBook: async (root, args, context) => {
@@ -199,29 +210,38 @@ const resolvers = {
       }
 
       const author = await Author.findOne( { name: {$eq: args.author}} )
+      let book = new Book({ ...args })
 
       if ( !(author) ){
-        const newAuthor = new Author({ name: args.author })
+        const newAuthor = new Author({ name: args.author, books: [ book.id ] })
+        book.author = newAuthor
         try {
           await newAuthor.save()
         } catch (error) {
           throw new UserInputError(error.message, { invalidArgs: args })
         }
-
-        const book = new Book({ ...args, 'author': newAuthor })
+        //const book = new Book({ ...args, 'author': newAuthor })
         try {
-          return await book.save()
+          await book.save()
         } catch (error) {
           throw new UserInputError(error.message, { invalidArgs: args })
         }
+
+        pubsub.publish('BOOK_ADDED', { bookAdded: book })
+        return book
       }
 
-      const book = new Book({ ...args, author: author })
+      //const book = new Book({ ...args, author: author })
+      book.author = author
+      author.books = author.books.concat(book.id)
       try {
-        return await book.save()
+        await book.save()
+        await author.save()
       } catch (error) {
         throw new UserInputError(error.message, { invalidArgs: args })
       }
+      pubsub.publish('BOOK_ADDED', { bookAdded: book })
+      return book
 
     },
     editAuthor: async (root, args, context) => {
@@ -264,9 +284,13 @@ const resolvers = {
       }
   
       return { value: jwt.sign(userForToken, JWT_SECRET) }
+    },
+  },
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator(['BOOK_ADDED'])
     }
-
-  }
+  },
 }
 
 const server = new ApolloServer({
@@ -285,6 +309,7 @@ const server = new ApolloServer({
   }
 })
 
-server.listen().then(({ url }) => {
+server.listen().then(({ url, subscriptionsUrl }) => {
   console.log(`Server ready at ${url}`)
+  console.log(`Subscriptions ready at ${subscriptionsUrl}`)
 })

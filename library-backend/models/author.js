@@ -11,6 +11,13 @@ const schema = new mongoose.Schema({
   born: {
     type: Number,
   },
+  //to solve bookcount's n+1 problem, store books on author
+  books: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Book',
+    },
+  ],
 })
 
 schema.plugin(uniqueValidator)
